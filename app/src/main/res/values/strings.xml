@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">StudentHelper</string>
+    <string-array name="account_type">
+        <item>Account Type...</item>
+        <item>Student</item>
+        <item>Professor</item>
+    </string-array>
+</resources>
