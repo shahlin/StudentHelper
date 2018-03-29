@@ -1,13 +1,16 @@
 package com.example.studenthelper;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -28,8 +31,6 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static android.content.Context.MODE_PRIVATE;
-
 /**
  * Created by DELL on 3/28/2018.
  */
@@ -38,21 +39,47 @@ public class Folders extends AppCompatActivity {
 
     private EditText folderTextField;
     private Button addFolderBtn;
+    private FoldersAdapter foldersAdapter;
+    private ArrayList<String> foldersList;
+    private GridView foldersGrid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.folders_page);
 
-        GridView foldersGrid = findViewById(R.id.folder_grid);
-        foldersGrid.setAdapter(new FoldersAdapter(this));
-
         SharedPreferences prefs = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
         final String user_id = prefs.getString("user_id", "null");
+
+        // Get GridView reference
+        foldersGrid = findViewById(R.id.folder_grid);
+
+        // Get reference to the database
+        final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("folders/" + user_id);
+
+         foldersList = new ArrayList<>();
+
+        // Set values to the GridView
+        ref.orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot folder: dataSnapshot.getChildren()){
+                    foldersList.add(folder.child("folder_name").getValue(String.class));
+                    Folders.this.foldersAdapter = new FoldersAdapter(Folders.this, foldersList);
+                    Folders.this.foldersGrid.setAdapter(foldersAdapter);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         // Folder name
         folderTextField = findViewById(R.id.folder_name_field);
 
+        // Add Folder Button
         addFolderBtn = findViewById(R.id.add_folder_btn);
 
         addFolderBtn.setOnClickListener(new View.OnClickListener() {
@@ -68,36 +95,44 @@ public class Folders extends AppCompatActivity {
                     return;
                 }
 
-                final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("folders/" + user_id);
-
                 // Check if the folder name is already taken
                 ref.orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-                   @Override
-                   public void onDataChange(DataSnapshot dataSnapshot) {
-                       boolean found = false;
-                       for(DataSnapshot folder: dataSnapshot.getChildren()){
-                           String foundName = folder.child("folder_name").getValue(String.class);
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        boolean found = false;
+                        for(DataSnapshot folder: dataSnapshot.getChildren()){
+                            String foundName = folder.child("folder_name").getValue(String.class);
 
-                           if(foundName.equals(folderName)){
-                               found = true;
+                            if(foundName.equals(folderName)){
+                                found = true;
 
-                               Toast.makeText(Folders.this, "Folder already exists", Toast.LENGTH_LONG).show();
+                                Toast.makeText(Folders.this, "Folder already exists", Toast.LENGTH_LONG).show();
 
-                               break;
-                           }
-                       }
+                                break;
+                            }
+                        }
 
-                       if(!found){
-                           // No folder with name exists; Proceed with adding folder
-                           addFolder(folderName, ref);
-                       }
-                   }
+                        if(!found){
+                            // No folder with name exists; Proceed with adding folder
+                            addFolder(folderName, ref);
 
-                   @Override
-                   public void onCancelled(DatabaseError databaseError) {
+                            if(foldersList.isEmpty()){
+                                Folders.this.foldersAdapter = new FoldersAdapter(Folders.this, foldersList);
+                                Folders.this.foldersGrid.setAdapter(foldersAdapter);
+                                Log.v("FOLDER_COUNT", "" + foldersList.size());
+                            }
 
-                   }
-               });
+                            foldersList.add(folderName);
+                            foldersAdapter.notifyDataSetChanged();
+                            Log.v("FOLDER_COUNT", "" + foldersList.size());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
     }
@@ -106,8 +141,8 @@ public class Folders extends AppCompatActivity {
 
         if(!name.matches("[a-zA-Z0-9 _]*")){
             throw new ExceptionHandler("Folder name cannot contain any special characters other than space/underscore");
-        } else if(name.length() > 10){
-            throw new ExceptionHandler("Folder name cannot contain more than 10 characters");
+        } else if(name.length() > 15){
+            throw new ExceptionHandler("Folder name cannot contain more than 15 characters");
         } else if(name.length() < 1){
             throw new ExceptionHandler("Folder needs a better name");
         }
@@ -129,6 +164,33 @@ public class Folders extends AppCompatActivity {
             }
         });
     }
+
+    private void logout(){
+        SharedPreferences prefs = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        editor.clear();
+        editor.apply();
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        //respond to menu item selection
+        switch (item.getItemId()) {
+            case R.id.logout_option:
+                logout();
+                startActivity(new Intent(this, MainActivity.class));
+                break;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
 }
 
 class FoldersAdapter extends BaseAdapter {
@@ -144,32 +206,9 @@ class FoldersAdapter extends BaseAdapter {
         }
     }
 
-    FoldersAdapter(Context context){
-        list = new ArrayList<>();
+    FoldersAdapter(Context context, ArrayList<String> foldersList){
         this.context = context;
-
-        // Get Shared Preferences
-        SharedPreferences prefs = context.getSharedPreferences("PREFERENCES", MODE_PRIVATE);
-
-        // Get currently logged in user ID
-        String user_id = prefs.getString("user_id", "null");
-
-        // Get reference to the database
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("folders/" + user_id);
-
-        ref.orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot folder: dataSnapshot.getChildren()){
-                    list.add(folder.child("folder_name").getValue(String.class));
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        this.list = foldersList;
     }
 
     @Override
@@ -191,7 +230,7 @@ class FoldersAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
 
         View row = view;
-        ViewHolder holder = null;
+        ViewHolder holder;
 
         if(row == null){
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
