@@ -1,5 +1,15 @@
 <resources>
     <string name="app_name">StudentHelper</string>
+    <string name="register_username_placeholder">Username</string>
+    <string name="register_password_placeholder">Password</string>
+    <string name="register_btn_text">Register</string>
+    <string name="login_password_placeholder">Password</string>
+    <string name="login_username_placeholder">Username</string>
+    <string name="login_btn_text">Login</string>
+    <string name="register_label_text">Don\'t have an account?</string>
+    <string name="add_folder_btn_text">Add Folder</string>
+    <string name="folder_name_placeholder">Folder Name</string>
+    <string name="logout_option_text">Logout</string>
     <string-array name="account_type">
         <item>Account Type...</item>
         <item>Student</item>

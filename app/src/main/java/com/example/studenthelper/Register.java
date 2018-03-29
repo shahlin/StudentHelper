@@ -146,8 +146,6 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
 
                         }
                     });
-
-                    // Proceed with registering
                 }
             }
         });
@@ -203,6 +201,10 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
             throw new ExceptionHandler("Username cannot contain digits only");
         } else if(!username.matches("[a-zA-Z0-9]*")){
             throw new ExceptionHandler("Username cannot contain special characters");
+        } else if(username.length() < 3){
+            throw new ExceptionHandler("Username cannot contain less than 3 characters");
+        } else if(username.length() > 8){
+            throw new ExceptionHandler("Username cannot contain more than 8 characters");
         }
     }
 

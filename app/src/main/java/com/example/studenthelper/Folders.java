@@ -119,12 +119,10 @@ public class Folders extends AppCompatActivity {
                             if(foldersList.isEmpty()){
                                 Folders.this.foldersAdapter = new FoldersAdapter(Folders.this, foldersList);
                                 Folders.this.foldersGrid.setAdapter(foldersAdapter);
-                                Log.v("FOLDER_COUNT", "" + foldersList.size());
                             }
 
                             foldersList.add(folderName);
                             foldersAdapter.notifyDataSetChanged();
-                            Log.v("FOLDER_COUNT", "" + foldersList.size());
                         }
                     }
 

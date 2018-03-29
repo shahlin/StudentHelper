@@ -17,6 +17,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".Register"/>
+        <activity android:name=".Folders"
+                  android:windowSoftInputMode="adjustPan"/>
     </application>
 
 </manifest>

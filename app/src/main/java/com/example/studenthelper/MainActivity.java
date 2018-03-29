@@ -1,6 +1,7 @@
 package com.example.studenthelper;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -26,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText password;
     private Button loginBtn;
     private TextView registerLabel;
+    private TextView login_error_field;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         password = findViewById(R.id.passwordField);
         loginBtn = findViewById(R.id.loginBtn);
         registerLabel = findViewById(R.id.registerLabel);
+        login_error_field = findViewById(R.id.login_error_field);
 
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -49,18 +52,18 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, Register.class);
         MainActivity.this.startActivity(intent);
     }
+
     private void handleLogin(){
 
         if(TextUtils.isEmpty(username.getText().toString()) || TextUtils.isEmpty(password.getText().toString())){
             // Username or password is empty
-            Toast.makeText(MainActivity.this, "Both fields required", Toast.LENGTH_LONG).show();
+            login_error_field.setText("Both fields required");
         } else {
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("users");
 
             String hashedPassword = null;
 
             try {
-
                 // Create MessageDigest instance for MD5
                 MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -90,14 +93,23 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     for(DataSnapshot user: dataSnapshot.getChildren()){
-                        if(user.child("username").getValue(String.class).equals(username.getText().toString().trim().toLowerCase()) && user.child("password").getValue(String.class).equals(hashedPasswordFinal)){
+                        if(user.child("username").getValue(String.class).toLowerCase().equals(username.getText().toString().trim().toLowerCase()) && user.child("password").getValue(String.class).equals(hashedPasswordFinal)){
                             // User found
-                            Toast.makeText(MainActivity.this, "Logged in!", Toast.LENGTH_LONG).show();
-                            break;
-                        } else {
-                            Toast.makeText(MainActivity.this, "Invalid username/password", Toast.LENGTH_LONG).show();
+                            String user_id = user.getKey();
+                            SharedPreferences prefs = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
+                            SharedPreferences.Editor editor = prefs.edit();
+
+                            editor.putString("user_id", user_id);
+                            editor.apply();
+
+                            Intent folderPage = new Intent(MainActivity.this, Folders.class);
+                            startActivity(folderPage);
+
+                            return;
                         }
                     }
+
+                    login_error_field.setText("Invalid username/password");
                 }
 
                 @Override
