@@ -5,12 +5,11 @@ import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -28,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private Button loginBtn;
     private TextView registerLabel;
     private TextView login_error_field;
+    private ProgressBar loadingSign;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,10 +39,17 @@ public class MainActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         registerLabel = findViewById(R.id.registerLabel);
         login_error_field = findViewById(R.id.login_error_field);
+        loadingSign = findViewById(R.id.loading_sign);
+
+        // Hide progress bar by default
+        loadingSign.setVisibility(View.GONE);
 
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // Show loading sign
+                loadingSign.setVisibility(View.VISIBLE);
+
                 handleLogin();
             }
         });
@@ -57,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
         if(TextUtils.isEmpty(username.getText().toString()) || TextUtils.isEmpty(password.getText().toString())){
             // Username or password is empty
+            loadingSign.setVisibility(View.GONE);
             login_error_field.setText("Both fields required");
         } else {
             DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("users");
@@ -95,6 +103,10 @@ public class MainActivity extends AppCompatActivity {
                     for(DataSnapshot user: dataSnapshot.getChildren()){
                         if(user.child("username").getValue(String.class).toLowerCase().equals(username.getText().toString().trim().toLowerCase()) && user.child("password").getValue(String.class).equals(hashedPasswordFinal)){
                             // User found
+
+                            // Disable login button
+                            loginBtn.setEnabled(false);
+
                             String user_id = user.getKey();
                             SharedPreferences prefs = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
                             SharedPreferences.Editor editor = prefs.edit();
@@ -103,12 +115,14 @@ public class MainActivity extends AppCompatActivity {
                             editor.apply();
 
                             Intent folderPage = new Intent(MainActivity.this, Folders.class);
+                            folderPage.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(folderPage);
 
                             return;
                         }
                     }
 
+                    loadingSign.setVisibility(View.GONE);
                     login_error_field.setText("Invalid username/password");
                 }
 
