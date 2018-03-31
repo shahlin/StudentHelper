@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -22,10 +21,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.json.JSONObject;
-import org.json.JSONStringer;
-
-import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -43,13 +38,13 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
     private String selectedType;
     private TextView errorField;
 
-    // True if error exists; if true, can't register
+    // True if error exists; if true, can't activity_register
     private boolean error = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.register);
+        setContentView(R.layout.activity_register);
 
         usernameField = findViewById(R.id.usernameField);
         passwordField = findViewById(R.id.passwordField);
@@ -64,13 +59,13 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
         accountTypeSpinner.setAdapter(adapter);
 
         accountTypeSpinner.setOnItemSelectedListener(this);
+        registerBtn.setEnabled(true);
 
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(validateRegister()){
 
-                    String username = usernameField.getText().toString().trim().toLowerCase();
                     String password = passwordField.getText().toString();
 
                     String hashedPassword = null;
@@ -120,6 +115,9 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
                             }
 
                             if(error == false){
+                                // Disable login button
+                                registerBtn.setEnabled(false);
+
                                 HashMap<String, String> dataMap = new HashMap<>();
                                 dataMap.put("username", username);
                                 dataMap.put("password", hashedPasswordFinal);

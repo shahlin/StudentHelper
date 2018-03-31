@@ -10,6 +10,7 @@
     <string name="add_folder_btn_text">Add Folder</string>
     <string name="folder_name_placeholder">Folder Name</string>
     <string name="logout_option_text">Logout</string>
+    <string name="folder_btn_text">Folders</string>
     <string-array name="account_type">
         <item>Account Type...</item>
         <item>Student</item>

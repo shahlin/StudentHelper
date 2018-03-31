@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,6 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,38 +38,38 @@ import java.util.HashMap;
  * Created by DELL on 3/28/2018.
  */
 
-public class Folders extends AppCompatActivity {
+public class FoldersActivity extends AppCompatActivity {
 
-    private EditText folderTextField;
-    private Button addFolderBtn;
-    private FoldersAdapter foldersAdapter;
-    private ArrayList<String> foldersList;
-    private GridView foldersGrid;
+    private EditText mFolderTextField;
+    private Button mAddFolderBtn;
+    private FoldersAdapter mFoldersAdapter;
+    private ArrayList<String> mFoldersList;
+    private GridView mFoldersGrid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.folders_page);
+        setContentView(R.layout.activity_folders_list);
 
         SharedPreferences prefs = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
         final String user_id = prefs.getString("user_id", "null");
 
         // Get GridView reference
-        foldersGrid = findViewById(R.id.folder_grid);
+        mFoldersGrid = findViewById(R.id.folder_grid);
 
         // Get reference to the database
         final DatabaseReference ref = FirebaseDatabase.getInstance().getReference("folders/" + user_id);
 
-         foldersList = new ArrayList<>();
+        mFoldersList = new ArrayList<>();
 
         // Set values to the GridView
         ref.orderByKey().addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot folder: dataSnapshot.getChildren()){
-                    foldersList.add(folder.child("folder_name").getValue(String.class));
-                    Folders.this.foldersAdapter = new FoldersAdapter(Folders.this, foldersList);
-                    Folders.this.foldersGrid.setAdapter(foldersAdapter);
+                    mFoldersList.add(folder.child("folder_name").getValue(String.class));
+                    FoldersActivity.this.mFoldersAdapter = new FoldersAdapter(FoldersActivity.this, mFoldersList);
+                    FoldersActivity.this.mFoldersGrid.setAdapter(mFoldersAdapter);
                 }
             }
 
@@ -80,21 +80,21 @@ public class Folders extends AppCompatActivity {
         });
 
         // Folder name
-        folderTextField = findViewById(R.id.folder_name_field);
+        mFolderTextField = findViewById(R.id.folder_name_field);
 
         // Add Folder Button
-        addFolderBtn = findViewById(R.id.add_folder_btn);
+        mAddFolderBtn = findViewById(R.id.add_folder_btn);
 
-        addFolderBtn.setOnClickListener(new View.OnClickListener() {
+        mAddFolderBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                final String folderName = folderTextField.getText().toString().trim();
+                final String folderName = mFolderTextField.getText().toString().trim();
 
                 try {
                     validateFolderName(folderName);
                 } catch (ExceptionHandler e){
-                    Toast.makeText(Folders.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(FoldersActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -109,7 +109,7 @@ public class Folders extends AppCompatActivity {
                             if(foundName.equals(folderName)){
                                 found = true;
 
-                                Toast.makeText(Folders.this, "Folder already exists", Toast.LENGTH_LONG).show();
+                                Toast.makeText(FoldersActivity.this, "Folder already exists", Toast.LENGTH_LONG).show();
 
                                 break;
                             }
@@ -119,13 +119,46 @@ public class Folders extends AppCompatActivity {
                             // No folder with name exists; Proceed with adding folder
                             addFolder(folderName, ref);
 
-                            if(foldersList.isEmpty()){
-                                Folders.this.foldersAdapter = new FoldersAdapter(Folders.this, foldersList);
-                                Folders.this.foldersGrid.setAdapter(foldersAdapter);
+                            if(mFoldersList.isEmpty()){
+                                FoldersActivity.this.mFoldersAdapter = new FoldersAdapter(FoldersActivity.this, mFoldersList);
+                                FoldersActivity.this.mFoldersGrid.setAdapter(mFoldersAdapter);
                             }
 
-                            foldersList.add(folderName);
-                            foldersAdapter.notifyDataSetChanged();
+                            mFoldersList.add(folderName);
+                            mFoldersAdapter.notifyDataSetChanged();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                }); // End of addListenerForSingleValueEvent()
+            }
+        }); // End of Add Folder Button Click Listener
+
+        mFoldersGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                final String folderClicked = mFoldersGrid.getItemAtPosition(i).toString();
+
+                ref.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for(DataSnapshot folder: dataSnapshot.getChildren()){
+                            DataSnapshot folder_names = folder.child("folder_name");
+
+                            if(folder_names.getValue(String.class).equals(folderClicked)){
+                                String id = folder.getKey();
+
+                                Intent ViewFolderPage = new Intent(FoldersActivity.this, ViewFolderContentActivity.class);
+                                ViewFolderPage.putExtra("folder_id", id);
+
+                                startActivity(ViewFolderPage);
+
+                                break;
+                            }
                         }
                     }
 
@@ -158,17 +191,17 @@ public class Folders extends AppCompatActivity {
             public void onComplete(@NonNull Task<Void> task) {
                 // Folder Added
                 if(task.isSuccessful()){
-                    Toast.makeText(Folders.this, "Folder added", Toast.LENGTH_LONG).show();
+                    Toast.makeText(FoldersActivity.this, "Folder added", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(Folders.this, "Error adding folder", Toast.LENGTH_LONG).show();
+                    Toast.makeText(FoldersActivity.this, "Error adding folder", Toast.LENGTH_LONG).show();
                 }
             }
         });
     }
 
     private void logout(){
-        SharedPreferences prefs = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
+        SharedPreferences PREFS = getSharedPreferences("PREFERENCES", MODE_PRIVATE);
+        SharedPreferences.Editor editor = PREFS.edit();
 
         editor.clear();
         editor.apply();
@@ -195,38 +228,11 @@ public class Folders extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event)  {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    switch (which){
-                        case DialogInterface.BUTTON_POSITIVE:
-                            finish();
-                            break;
-
-                        case DialogInterface.BUTTON_NEGATIVE:
-                            break;
-                    }
-                }
-            };
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("Are you sure you want to quit?").setPositiveButton("Yes", dialogClickListener)
-                    .setNegativeButton("No", dialogClickListener).show();
-
-            return true;
-        }
-
-        return super.onKeyDown(keyCode, event);
-    }
 }
 
 class FoldersAdapter extends BaseAdapter {
 
-    private ArrayList<String> list;
+    private ArrayList<String> mList;
     private Context context;
 
     class ViewHolder {
@@ -239,17 +245,17 @@ class FoldersAdapter extends BaseAdapter {
 
     FoldersAdapter(Context context, ArrayList<String> foldersList){
         this.context = context;
-        this.list = foldersList;
+        this.mList = foldersList;
     }
 
     @Override
     public int getCount() {
-        return list.size();
+        return mList.size();
     }
 
     @Override
     public Object getItem(int i) {
-        return list.get(i);
+        return mList.get(i);
     }
 
     @Override
@@ -274,7 +280,7 @@ class FoldersAdapter extends BaseAdapter {
             holder = (ViewHolder) row.getTag();
         }
 
-        holder.folderName.setText(list.get(i));
+        holder.folderName.setText(mList.get(i));
 
         return row;
     }

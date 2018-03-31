@@ -114,9 +114,9 @@ public class MainActivity extends AppCompatActivity {
                             editor.putString("user_id", user_id);
                             editor.apply();
 
-                            Intent folderPage = new Intent(MainActivity.this, Folders.class);
-                            folderPage.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(folderPage);
+                            Intent homePage = new Intent(MainActivity.this, HomeActivity.class);
+                            homePage.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(homePage);
 
                             return;
                         }
