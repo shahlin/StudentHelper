@@ -11,6 +11,7 @@
     <string name="folder_name_placeholder">Folder Name</string>
     <string name="logout_option_text">Logout</string>
     <string name="folder_btn_text">Folders</string>
+    <string name="single_file_name_placeholder">File Name</string>
     <string-array name="account_type">
         <item>Account Type...</item>
         <item>Student</item>
