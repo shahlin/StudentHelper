@@ -16,6 +16,7 @@ import android.widget.Button;
 public class HomeActivity extends AppCompatActivity {
 
     private Button btn_folders_page;
+    private Button btn_settings_page;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,11 +24,21 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         btn_folders_page = findViewById(R.id.btn_folders_page);
+        btn_settings_page = findViewById(R.id.btn_settings_page);
 
+        // Folders button click
         btn_folders_page.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 startActivity(new Intent(HomeActivity.this, FoldersActivity.class));
+            }
+        });
+
+        // Settings button click
+        btn_settings_page.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(HomeActivity.this, SettingsActivity.class));
             }
         });
     }

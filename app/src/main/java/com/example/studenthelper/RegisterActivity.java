@@ -29,7 +29,7 @@ import java.util.HashMap;
  * Created by DELL on 3/25/2018.
  */
 
-public class Register extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class RegisterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private EditText usernameField;
     private EditText passwordField;
@@ -66,7 +66,7 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
             public void onClick(View view) {
                 if(validateRegister()){
 
-                    String password = passwordField.getText().toString();
+                    final String password = passwordField.getText().toString();
 
                     String hashedPassword = null;
 
@@ -106,7 +106,7 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
                             for(DataSnapshot user: dataSnapshot.getChildren()){
                                 if(user.child("username").getValue(String.class).equals(username)){
                                     // Username found
-                                    Toast.makeText(Register.this, "User already exists", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(RegisterActivity.this, "User already exists", Toast.LENGTH_LONG).show();
                                     error = true;
                                     break;
                                 } else {
@@ -118,21 +118,18 @@ public class Register extends AppCompatActivity implements AdapterView.OnItemSel
                                 // Disable login button
                                 registerBtn.setEnabled(false);
 
-                                HashMap<String, String> dataMap = new HashMap<>();
-                                dataMap.put("username", username);
-                                dataMap.put("password", hashedPasswordFinal);
-                                dataMap.put("type", selectedType);
+                                User user = new User(username, hashedPasswordFinal, selectedType);
 
                                 // Store user in database
                                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("users");
 
-                                ref.push().setValue(dataMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                ref.push().setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
                                         if(task.isSuccessful()){
-                                            Toast.makeText(Register.this, "Registered!", Toast.LENGTH_LONG).show();
+                                            Toast.makeText(RegisterActivity.this, "Registered!", Toast.LENGTH_LONG).show();
                                         } else {
-                                            Toast.makeText(Register.this, "Error registering", Toast.LENGTH_LONG).show();
+                                            Toast.makeText(RegisterActivity.this, "Error registering", Toast.LENGTH_LONG).show();
                                         }
                                     }
                                 });
